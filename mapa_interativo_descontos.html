@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Média de desconto por categoria e marca</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    html, body { margin: 0; min-height: 100%; font-family: Arial, sans-serif; }
+    #chart { width: 100%; height: 100vh; }
+    #status { padding: 16px; }
+  </style>
+</head>
+<body>
+  <div id="status">Carregando dados...</div>
+  <div id="chart"></div>
+  <script>
+    const arquivos = Array.from({length: 10}, (_, i) => `dados_parte_${String(i + 1).padStart(2, '0')}.csv`);
+
+    async function carregar() {
+      const grupos = new Map();
+
+      for (const arquivo of arquivos) {
+        const texto = await fetch(arquivo).then(r => {
+          if (!r.ok) throw new Error(`Falha ao carregar ${arquivo}`);
+          return r.text();
+        });
+
+        const linhas = texto.trim().split(/\r?\n/).slice(1);
+        for (const linha of linhas) {
+          const c = linha.split(';');
+          if (c.length < 7) continue;
+          const marca = c[1];
+          const desconto = Number(c[5]) || 0;
+          const categoria = c[6];
+          const chave = `${categoria}|||${marca}`;
+          const atual = grupos.get(chave) || { categoria, marca, soma: 0, n: 0 };
+          atual.soma += desconto;
+          atual.n += 1;
+          grupos.set(chave, atual);
+        }
+      }
+
+      const itens = [...grupos.values()].map(d => ({
+        categoria: d.categoria,
+        marca: d.marca,
+        media: d.soma / d.n
+      }));
+
+      const categorias = [...new Set(itens.map(d => d.categoria))];
+      const ids = itens.map(d => `${d.categoria}/${d.marca}`).concat(categorias);
+      const labels = itens.map(d => d.marca).concat(categorias);
+      const parents = itens.map(d => d.categoria).concat(categorias.map(() => ''));
+      const medias = itens.map(d => d.media);
+      const totais = categorias.map(cat =>
+        itens.filter(d => d.categoria === cat).reduce((s, d) => s + d.media, 0)
+      );
+      const values = medias.concat(totais);
+
+      document.getElementById('status').remove();
+      Plotly.newPlot('chart', [{
+        type: 'treemap',
+        ids,
+        labels,
+        parents,
+        values,
+        branchvalues: 'total',
+        marker: {
+          colors: values,
+          colorscale: 'Viridis',
+          colorbar: { title: 'Média de desconto' }
+        },
+        hovertemplate: '%{label}<br>Média de desconto: %{value:.2f}<extra></extra>'
+      }], {
+        title: 'Média de desconto por categoria e marca',
+        margin: { t: 60, l: 10, r: 10, b: 10 }
+      }, { responsive: true });
+    }
+
+    carregar().catch(err => {
+      document.getElementById('status').textContent = `Erro: ${err.message}. Abra esta página pelo GitHub Pages, não como arquivo local.`;
+    });
+  </script>
+</body>
+</html>
