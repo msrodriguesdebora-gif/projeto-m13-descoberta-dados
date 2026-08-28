@@ -1,12 +1,12 @@
-# Projeto — Fundamentos da Descoberta de Dados
+# Projeto - Fundamentos da Descoberta de Dados
 
 Projeto do Módulo 13 com análise estatística e visualização de uma base de produtos de supermercado do Chile.
 
 ## Arquivos
 
-- `Profissao_Cientista_de_Dados_M13_Projeto_RESOLVIDO.ipynb` — notebook com todas as respostas.
-- `dados_parte_01.csv` a `dados_parte_10.csv` — base utilizada, dividida em partes apenas para publicação. O notebook reúne as partes automaticamente.
-- `mapa_interativo_descontos.html` — visualização interativa em treemap.
+- `Profissao_Cientista_de_Dados_M13_Projeto_RESOLVIDO.ipynb` - notebook com todas as respostas.
+- `dados_parte_01.csv` a `dados_parte_10.csv` - base utilizada, dividida em partes apenas para publicação. O notebook reúne as partes automaticamente.
+- `mapa_interativo_descontos.html` - visualização interativa em treemap.
 
 ## Principais resultados
 
