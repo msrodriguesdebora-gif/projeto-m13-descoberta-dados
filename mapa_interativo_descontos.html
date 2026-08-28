@@ -1,85 +1,25 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Média de desconto por categoria e marca</title>
-  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <style>
-    html, body { margin: 0; min-height: 100%; font-family: Arial, sans-serif; }
-    #chart { width: 100%; height: 100vh; }
-    #status { padding: 16px; }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Projeto M13 — Descoberta de Dados</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb}.wrap{max-width:1400px;margin:auto;padding:28px}.hero,.panel,.card{background:#111827;border:1px solid #263244;border-radius:18px}.hero{padding:24px;margin-bottom:18px}.hero h1{margin:6px 0 8px;font-size:38px}.hero p,.muted{color:#9ca3af}.eyebrow{color:#60a5fa;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}.card{padding:18px}.label{color:#9ca3af;font-size:13px}.value{font-size:27px;font-weight:700;margin-top:8px}.sub{color:#9ca3af;font-size:12px;margin-top:4px}.grid{display:grid;grid-template-columns:1.35fr .65fr;gap:18px}.panel{padding:18px}.panel h2{margin:0 0 4px;font-size:19px}.panel p{margin:0 0 12px;color:#9ca3af;font-size:13px;line-height:1.5}select{background:#172033;color:#e5e7eb;border:1px solid #263244;border-radius:10px;padding:9px 12px;margin-bottom:10px}#treemap,#bar{height:620px}.note{margin-top:18px;padding:16px 18px;border:1px solid #263244;border-radius:14px;background:#111827;line-height:1.6}.footer{text-align:center;color:#9ca3af;font-size:12px;margin-top:24px}.loading{padding:40px;text-align:center;color:#9ca3af}@media(max-width:980px){.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}@media(max-width:560px){.cards{grid-template-columns:1fr}.wrap{padding:14px}.hero h1{font-size:30px}}
+</style>
 </head>
-<body>
-  <div id="status">Carregando dados...</div>
-  <div id="chart"></div>
-  <script>
-    const arquivos = Array.from({length: 10}, (_, i) => `dados_parte_${String(i + 1).padStart(2, '0')}.csv`);
-
-    async function carregar() {
-      const grupos = new Map();
-
-      for (const arquivo of arquivos) {
-        const texto = await fetch(arquivo).then(r => {
-          if (!r.ok) throw new Error(`Falha ao carregar ${arquivo}`);
-          return r.text();
-        });
-
-        const linhas = texto.trim().split(/\r?\n/).slice(1);
-        for (const linha of linhas) {
-          const c = linha.split(';');
-          if (c.length < 7) continue;
-          const marca = c[1];
-          const desconto = Number(c[5]) || 0;
-          const categoria = c[6];
-          const chave = `${categoria}|||${marca}`;
-          const atual = grupos.get(chave) || { categoria, marca, soma: 0, n: 0 };
-          atual.soma += desconto;
-          atual.n += 1;
-          grupos.set(chave, atual);
-        }
-      }
-
-      const itens = [...grupos.values()].map(d => ({
-        categoria: d.categoria,
-        marca: d.marca,
-        media: d.soma / d.n
-      }));
-
-      const categorias = [...new Set(itens.map(d => d.categoria))];
-      const ids = itens.map(d => `${d.categoria}/${d.marca}`).concat(categorias);
-      const labels = itens.map(d => d.marca).concat(categorias);
-      const parents = itens.map(d => d.categoria).concat(categorias.map(() => ''));
-      const medias = itens.map(d => d.media);
-      const totais = categorias.map(cat =>
-        itens.filter(d => d.categoria === cat).reduce((s, d) => s + d.media, 0)
-      );
-      const values = medias.concat(totais);
-
-      document.getElementById('status').remove();
-      Plotly.newPlot('chart', [{
-        type: 'treemap',
-        ids,
-        labels,
-        parents,
-        values,
-        branchvalues: 'total',
-        marker: {
-          colors: values,
-          colorscale: 'Viridis',
-          colorbar: { title: 'Média de desconto' }
-        },
-        hovertemplate: '%{label}<br>Média de desconto: %{value:.2f}<extra></extra>'
-      }], {
-        title: 'Média de desconto por categoria e marca',
-        margin: { t: 60, l: 10, r: 10, b: 10 }
-      }, { responsive: true });
-    }
-
-    carregar().catch(err => {
-      document.getElementById('status').textContent = `Erro: ${err.message}. Abra esta página pelo GitHub Pages, não como arquivo local.`;
-    });
-  </script>
-</body>
-</html>
+<body><div class="wrap">
+<section class="hero"><div class="eyebrow">Módulo 13 · Fundamentos da Descoberta de Dados</div><h1>Análise de descontos por categoria e marca</h1><p>No treemap, o <b>tamanho</b> representa a quantidade de produtos de cada marca e a <b>cor</b> representa a média de desconto. Assim, marcas com poucos itens e descontos muito altos não dominam visualmente todo o gráfico.</p></section>
+<section class="cards"><div class="card"><div class="label">Produtos analisados</div><div class="value" id="total">—</div><div class="sub">registros na base</div></div><div class="card"><div class="label">Categorias</div><div class="value" id="ncat">—</div><div class="sub">grupos de produtos</div></div><div class="card"><div class="label">Maior média por categoria</div><div class="value" id="topcatv">—</div><div class="sub" id="topcat">—</div></div><div class="card"><div class="label">Marca com maior média</div><div class="value" id="topbrandv">—</div><div class="sub" id="topbrand">—</div></div></section>
+<section class="grid"><div class="panel"><h2>Treemap interativo</h2><p>Passe o mouse para ver categoria, marca, média de desconto, quantidade de produtos e preço médio.</p><select id="filtro"><option value="TODAS">Todas as categorias</option></select><div id="treemap" class="loading">Carregando dados...</div></div><div class="panel"><h2>Média de desconto por categoria</h2><p>Comparação das categorias, ordenadas da maior para a menor média de desconto.</p><div id="bar" class="loading">Carregando dados...</div></div></section>
+<div class="note" id="leitura"><b>Leitura principal:</b> carregando análise...</div><div class="footer">Projeto de Ciência de Dados · Visualização interativa com Plotly</div></div>
+<script>
+const files=Array.from({length:10},(_,i)=>`dados_parte_${String(i+1).padStart(2,'0')}.csv`);
+const num=v=>{const n=Number(String(v??'').replace(',','.'));return Number.isFinite(n)?n:0};
+function parseCSV(t){const ls=t.trim().split(/\r?\n/),h=ls[0].split(';');return ls.slice(1).filter(Boolean).map(l=>{const p=l.split(';'),o={};h.forEach((k,i)=>o[k]=p[i]??'');return o})}
+function group(rows){const m=new Map();for(const r of rows){const k=r.Categoria+'|||'+r.Marca;if(!m.has(k))m.set(k,{Categoria:r.Categoria,Marca:r.Marca,sD:0,sP:0,n:0});const x=m.get(k);x.sD+=num(r.Desconto);x.sP+=num(r.Preco_Normal);x.n++}return [...m.values()].map(x=>({...x,Media_Desconto:x.sD/x.n,Media_Preco:x.sP/x.n,Qtde_Produtos:x.n}))}
+function cats(rows){const m=new Map();for(const r of rows){if(!m.has(r.Categoria))m.set(r.Categoria,{Categoria:r.Categoria,s:0,n:0});const x=m.get(r.Categoria);x.s+=num(r.Desconto);x.n++}return [...m.values()].map(x=>({Categoria:x.Categoria,Media_Desconto:x.s/x.n,Qtde_Produtos:x.n}))}
+function treemap(dados,f='TODAS'){const b=f==='TODAS'?dados:dados.filter(d=>d.Categoria===f),labels=[],parents=[],values=[],colors=[],custom=[];[...new Set(b.map(d=>d.Categoria))].forEach(cat=>{const s=b.filter(d=>d.Categoria===cat),q=s.reduce((a,d)=>a+d.Qtde_Produtos,0),c=s.reduce((a,d)=>a+d.Media_Desconto*d.Qtde_Produtos,0)/q;labels.push(cat);parents.push('');values.push(q);colors.push(c);custom.push([cat,null,q,null])});b.forEach(d=>{labels.push(d.Marca);parents.push(d.Categoria);values.push(d.Qtde_Produtos);colors.push(d.Media_Desconto);custom.push([d.Categoria,d.Media_Desconto,d.Qtde_Produtos,d.Media_Preco])});Plotly.react('treemap',[{type:'treemap',labels,parents,values,branchvalues:'total',marker:{colors,colorscale:'Viridis',colorbar:{title:'Média<br>desconto'}},customdata:custom,hovertemplate:'<b>%{label}</b><br>Categoria: %{customdata[0]}<br>Média desconto: %{customdata[1]:.2f}<br>Produtos: %{customdata[2]}<br>Preço médio: %{customdata[3]:.2f}<extra></extra>',textinfo:'label'}],{margin:{t:8,l:8,r:8,b:8},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#e5e7eb'}},{responsive:true,displaylogo:false})}
+function bar(c){const d=[...c].sort((a,b)=>a.Media_Desconto-b.Media_Desconto);Plotly.newPlot('bar',[{type:'bar',orientation:'h',x:d.map(x=>x.Media_Desconto),y:d.map(x=>x.Categoria),text:d.map(x=>x.Media_Desconto.toFixed(2)),textposition:'outside',hovertemplate:'<b>%{y}</b><br>Média de desconto: %{x:.2f}<extra></extra>'}],{margin:{t:8,l:150,r:55,b:45},xaxis:{title:'Média de desconto',gridcolor:'#263244'},yaxis:{automargin:true},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#e5e7eb'}},{responsive:true,displaylogo:false})}
+Promise.all(files.map(f=>fetch(f).then(r=>r.text()))).then(ts=>{const rows=ts.flatMap(parseCSV),dados=group(rows),cs=cats(rows).sort((a,b)=>b.Media_Desconto-a.Media_Desconto),tb=[...dados].sort((a,b)=>b.Media_Desconto-a.Media_Desconto)[0];document.getElementById('total').textContent=rows.length.toLocaleString('pt-BR');document.getElementById('ncat').textContent=new Set(rows.map(r=>r.Categoria)).size;document.getElementById('topcatv').textContent=cs[0].Media_Desconto.toFixed(2);document.getElementById('topcat').textContent=cs[0].Categoria;document.getElementById('topbrandv').textContent=tb.Media_Desconto.toFixed(2);document.getElementById('topbrand').textContent=tb.Marca;document.getElementById('leitura').innerHTML=`<b>Leitura principal:</b> a categoria <b>${cs[0].Categoria}</b> apresenta a maior média de desconto (${cs[0].Media_Desconto.toFixed(2)}). O treemap permite observar se esse resultado está distribuído entre várias marcas ou concentrado em poucas.`;const s=document.getElementById('filtro');[...new Set(dados.map(d=>d.Categoria))].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;s.appendChild(o)});s.addEventListener('change',e=>treemap(dados,e.target.value));treemap(dados);bar(cs)}).catch(e=>{document.getElementById('treemap').textContent='Não foi possível carregar os dados.';console.error(e)});
+</script></body></html>
